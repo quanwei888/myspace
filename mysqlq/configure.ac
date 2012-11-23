@@ -5,9 +5,19 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AC_CONFIG_HEADERS([config.h])
 
-CPPFLAGS="-I/usr/include/mysql $CPPFLAGS"
-LDFLAGS="-L/usr/lib/ $LDFLAGS"
-LIBS="$LIBS -lmysqlclient"
+dnl --------------------------------------
+dnl add mysql lib path
+# Checks for mysql support.
+AC_ARG_WITH([mysql],
+            [AS_HELP_STRING([--with-mysql=PATH],
+            [location of the MySQL path, defaults to /usr/])],
+            [MYSQL_LIB_PATH="$withval"],
+            [MYSQL_LIB_PATH='/usr'])
+AC_SUBST([MYSQL_LIB_PATH])
+CPPFLAGS="-I$MYSQL_LIB_PATH/include $CPPFLAGS"
+CFLAGS="-I$MYSQL_LIB_PATH/include $CFLAGS"
+LIBS="-L$MYSQL_LIB_PATH/lib -lmysqlclient $LIBS"
+
 trylibeventdir=""
 AC_ARG_WITH(libevent,
        [  --with-libevent=PATH    Specify path to libevent installation ],

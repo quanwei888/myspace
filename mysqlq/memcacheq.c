@@ -1844,7 +1844,14 @@ static void usage(void) {
            "-vv           very verbose (also print client commands/reponses)\n"
            "-h            print this help and exit\n"
            "-i            print license info\n"
-           "-P <file>     save PID in <file>, only used with -d option\n"
+           "-P <file>     save PID in <file>, only used with -d option\n");
+    printf("--------------------Mysqlcb Options-------------------------------\n");
+    printf("--mysql-host=<host>            master mysql host,default is '127.0.0.1'\n"
+    	   "--mysql-port=<port>            master mysql port,default is 3306\n"
+    	   "--mysql-host=<user>            master mysql user,default is 'root'\n"
+    	   "--mysql-host=<password>        master mysql password,default is empty\n"
+    	   "--mysql-host=<serverid>        master mysql serverid,default is 12345\n"
+    	   "--mysql-ralaypath=<ralaypath>  ralay path,default is '/tmp/ralay'\n"
            );
 #ifdef USE_THREADS
     printf("-t <num>      number of threads to use, default 4\n");
@@ -2085,7 +2092,7 @@ int main (int argc, char **argv) {
         {0,         0,                 0,  0 }
     };
 
-    my_cb_init();
+    mycb_init();
     /* process arguments */
     while ((c = getopt_long(argc, argv, "a:U:p:s:c:hivl:dru:P:t:H:m:A:L:C:T:S:e:D:E:B:NR",long_options, &option_index)) != -1) {
         switch (c) {
@@ -2349,10 +2356,22 @@ int main (int argc, char **argv) {
     start_mempool_trickle_thread();
     start_deadlock_detect_thread();
     start_qstats_dump_thread();
-    start_mysqlcb_thread();
+
+	mycb_conf.verbose =  settings.verbose;
+	mycb_conf.isRun = 1;
+	pthread_t mysqlcb_tid = start_mysqlcb_thread();
+	if (settings.verbose > 1) {
+		fprintf(stderr, "[mysqlcb] [thread] start mysqlcb thread\n");
+	}
 
     /* enter the event loop */
     event_base_loop(main_base, 0);
+
+
+	/* stop mysqlcb thead*/
+    fprintf(stderr, "[mysqlcb] [thread] stop mysqlcb thread\n");
+	mycb_conf.isRun = 0;
+	pthread_join(mysqlcb_tid,NULL);
 
     /* cleanup bdb staff */
     fprintf(stderr, "try to clean up bdb resource...\n");
@@ -2371,6 +2390,8 @@ int main (int argc, char **argv) {
       free(l_socket);
     if (u_socket)
       free(u_socket);
+	
+	
 
     return 0;
 }
@@ -2413,7 +2434,7 @@ void mysqlcb_event_handler(event_t * event) {
 
 
     if (settings.verbose > 1) {
-    	fprintf(stderr, "<mysql event:%s\n", jsonValue);
+    	fprintf(stderr, "[mysqlcb] [data] %s\n", jsonValue);
     }
 
 	//uint jsonLen = strlen(jsonValue);
@@ -2424,17 +2445,18 @@ void mysqlcb_event_handler(event_t * event) {
 static void * mysqlcb_run(void * arg) {
     mycb_conf.eventHandler = mysqlcb_event_handler;
     while (!daemon_quit) {
-    	my_cb_start();
-		my_cb_destrory();
+    	mycb_start();
+		mycb_destrory();
 		sleep(1);
     }
 
 }
 
-void start_mysqlcb_thread() {
+pthread_t start_mysqlcb_thread() {
 	pthread_t tid;
 	if ((errno = pthread_create(&tid, NULL, mysqlcb_run, NULL)) != 0) {
 		fprintf(stderr,"failed spawning start_mysqlcb_thread thread: %s\n",strerror(errno));
 	    exit(EXIT_FAILURE);
 	}
+	return tid;
 }

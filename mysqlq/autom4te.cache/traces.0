@@ -795,27 +795,28 @@ m4trace:configure.ac:4: -1- _AM_SUBST_NOTMAKE([am__fastdepCC_TRUE])
 m4trace:configure.ac:4: -1- _AM_SUBST_NOTMAKE([am__fastdepCC_FALSE])
 m4trace:configure.ac:5: -1- AM_PROG_CC_C_O
 m4trace:configure.ac:5: -1- m4_pattern_allow([^NO_MINUS_C_MINUS_O$])
-m4trace:configure.ac:26: -1- _m4_warn([obsolete], [The macro `AC_TRY_LINK' is obsolete.
+m4trace:configure.ac:16: -1- m4_pattern_allow([^MYSQL_LIB_PATH$])
+m4trace:configure.ac:36: -1- _m4_warn([obsolete], [The macro `AC_TRY_LINK' is obsolete.
 You should run autoupdate.], [../../lib/autoconf/general.m4:2688: AC_TRY_LINK is expanded from...
 ../../lib/m4sugar/m4sh.m4:606: AS_IF is expanded from...
 ../../lib/autoconf/general.m4:2032: AC_CACHE_VAL is expanded from...
 ../../lib/autoconf/general.m4:2053: AC_CACHE_CHECK is expanded from...
-configure.ac:26: the top level])
-m4trace:configure.ac:105: -1- m4_pattern_allow([^CPP$])
-m4trace:configure.ac:105: -1- m4_pattern_allow([^CPPFLAGS$])
-m4trace:configure.ac:105: -1- m4_pattern_allow([^CPP$])
-m4trace:configure.ac:105: -1- m4_pattern_allow([^GREP$])
-m4trace:configure.ac:105: -1- m4_pattern_allow([^EGREP$])
-m4trace:configure.ac:105: -1- m4_pattern_allow([^STDC_HEADERS$])
-m4trace:configure.ac:105: -1- m4_pattern_allow([^HAVE_DB_H$])
-m4trace:configure.ac:114: -2- m4_pattern_allow([^HAVE_DAEMON$])
-m4trace:configure.ac:114: -1- m4_pattern_allow([^LIB@&t@OBJS$])
-m4trace:configure.ac:116: -1- m4_pattern_allow([^HAVE__BOOL$])
-m4trace:configure.ac:116: -1- m4_pattern_allow([^HAVE_STDBOOL_H$])
-m4trace:configure.ac:117: -1- m4_pattern_allow([^const$])
-m4trace:configure.ac:118: -2- m4_pattern_allow([^HAVE_MALLOC_H$])
-m4trace:configure.ac:119: -1- m4_pattern_allow([^HAVE_STRUCT_MALLINFO$])
-m4trace:configure.ac:128: -1- AC_DEFUN([AC_C_SOCKLEN_T], [AC_CACHE_CHECK(for socklen_t, ac_cv_c_socklen_t,
+configure.ac:36: the top level])
+m4trace:configure.ac:115: -1- m4_pattern_allow([^CPP$])
+m4trace:configure.ac:115: -1- m4_pattern_allow([^CPPFLAGS$])
+m4trace:configure.ac:115: -1- m4_pattern_allow([^CPP$])
+m4trace:configure.ac:115: -1- m4_pattern_allow([^GREP$])
+m4trace:configure.ac:115: -1- m4_pattern_allow([^EGREP$])
+m4trace:configure.ac:115: -1- m4_pattern_allow([^STDC_HEADERS$])
+m4trace:configure.ac:115: -1- m4_pattern_allow([^HAVE_DB_H$])
+m4trace:configure.ac:124: -2- m4_pattern_allow([^HAVE_DAEMON$])
+m4trace:configure.ac:124: -1- m4_pattern_allow([^LIB@&t@OBJS$])
+m4trace:configure.ac:126: -1- m4_pattern_allow([^HAVE__BOOL$])
+m4trace:configure.ac:126: -1- m4_pattern_allow([^HAVE_STDBOOL_H$])
+m4trace:configure.ac:127: -1- m4_pattern_allow([^const$])
+m4trace:configure.ac:128: -2- m4_pattern_allow([^HAVE_MALLOC_H$])
+m4trace:configure.ac:129: -1- m4_pattern_allow([^HAVE_STRUCT_MALLINFO$])
+m4trace:configure.ac:138: -1- AC_DEFUN([AC_C_SOCKLEN_T], [AC_CACHE_CHECK(for socklen_t, ac_cv_c_socklen_t,
 [
   AC_TRY_COMPILE([
     #include <sys/types.h>
@@ -832,22 +833,22 @@ if test $ac_cv_c_socklen_t = no; then
   AC_DEFINE(socklen_t, int, [define to int if socklen_t not available])
 fi
 ])
-m4trace:configure.ac:147: -1- AC_C_SOCKLEN_T
-m4trace:configure.ac:147: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
+m4trace:configure.ac:157: -1- AC_C_SOCKLEN_T
+m4trace:configure.ac:157: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
 You should run autoupdate.], [../../lib/autoconf/general.m4:2615: AC_TRY_COMPILE is expanded from...
 ../../lib/m4sugar/m4sh.m4:606: AS_IF is expanded from...
 ../../lib/autoconf/general.m4:2032: AC_CACHE_VAL is expanded from...
 ../../lib/autoconf/general.m4:2053: AC_CACHE_CHECK is expanded from...
-configure.ac:128: AC_C_SOCKLEN_T is expanded from...
-configure.ac:147: the top level])
-m4trace:configure.ac:147: -1- m4_pattern_allow([^socklen_t$])
-m4trace:configure.ac:153: -1- m4_pattern_allow([^USE_THREADS$])
-m4trace:configure.ac:157: -1- m4_pattern_allow([^LIB@&t@OBJS$])
-m4trace:configure.ac:157: -1- m4_pattern_allow([^LTLIBOBJS$])
-m4trace:configure.ac:157: -1- AM_CONDITIONAL([am__EXEEXT], [test -n "$EXEEXT"])
-m4trace:configure.ac:157: -1- m4_pattern_allow([^am__EXEEXT_TRUE$])
-m4trace:configure.ac:157: -1- m4_pattern_allow([^am__EXEEXT_FALSE$])
-m4trace:configure.ac:157: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_TRUE])
-m4trace:configure.ac:157: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_FALSE])
-m4trace:configure.ac:157: -1- _AC_AM_CONFIG_HEADER_HOOK(["$ac_file"])
-m4trace:configure.ac:157: -1- _AM_OUTPUT_DEPENDENCY_COMMANDS
+configure.ac:138: AC_C_SOCKLEN_T is expanded from...
+configure.ac:157: the top level])
+m4trace:configure.ac:157: -1- m4_pattern_allow([^socklen_t$])
+m4trace:configure.ac:163: -1- m4_pattern_allow([^USE_THREADS$])
+m4trace:configure.ac:167: -1- m4_pattern_allow([^LIB@&t@OBJS$])
+m4trace:configure.ac:167: -1- m4_pattern_allow([^LTLIBOBJS$])
+m4trace:configure.ac:167: -1- AM_CONDITIONAL([am__EXEEXT], [test -n "$EXEEXT"])
+m4trace:configure.ac:167: -1- m4_pattern_allow([^am__EXEEXT_TRUE$])
+m4trace:configure.ac:167: -1- m4_pattern_allow([^am__EXEEXT_FALSE$])
+m4trace:configure.ac:167: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_TRUE])
+m4trace:configure.ac:167: -1- _AM_SUBST_NOTMAKE([am__EXEEXT_FALSE])
+m4trace:configure.ac:167: -1- _AC_AM_CONFIG_HEADER_HOOK(["$ac_file"])
+m4trace:configure.ac:167: -1- _AM_OUTPUT_DEPENDENCY_COMMANDS

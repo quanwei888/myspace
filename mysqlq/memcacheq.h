@@ -284,7 +284,7 @@ struct mysqlcb_settings mysqlcb_settings;
 static void mysqlcb_add_event(const char * queue,const char * event ,size_t eventLen);
 static void * mysqlcb_run(void *);
 static void mysqlcb_event_handler(event_t * event);
-static void start_mysqlcb_thread();
+static pthread_t start_mysqlcb_thread();
 /*
  * In multithreaded mode, we wrap certain functions with lock management and
  * replace the logic of some other functions. All wrapped functions have

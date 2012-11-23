@@ -9,83 +9,88 @@
 #include "mysqlcb_buffer.h"
 
 mycb_conf_t mycb_conf;
-extern int daemon_quit;
 
-void my_cb_init() {
+void mycb_init() {
 	strncpy(mycb_conf.host, "127.0.0.1", sizeof(mycb_conf.host));
 	strncpy(mycb_conf.ralayLogPath, "/tmp/ralay", sizeof(mycb_conf.ralayLogPath));
 	strncpy(mycb_conf.userName, "root", sizeof(mycb_conf.userName));
 	mycb_conf.port = 3306;
-	mycb_conf.serverId = 10000;
+	mycb_conf.serverId = 12345;
 	mycb_buf_init(&mycb_conf.readBuf);
 	mycb_buf_init(&mycb_conf.writeBuf);
 	mycb_conf.sock = 0;
 	mycb_conf.ralayLogFd = NULL;
+	mycb_conf.isRun = 1;
 }
-void my_cb_destrory() {
+void mycb_destrory() {
 	if (mycb_conf.sock != 0) {
 		close(mycb_conf.sock);
 	}
 	mycb_conf.sock = 0;
-	if (mycb_conf.ralayLogFd != NULL) {
+	if (mycb_conf.ralayLogFd != NULL ) {
 		fclose(mycb_conf.ralayLogFd);
 	}
 	mycb_conf.ralayLogFd = NULL;
 }
 
-int my_cb_start() {
+int mycb_start() {
 	int ret = 0;
 
 	//连接master
-	if ((ret = my_cb_connect()) != 0) {
-		fprintf(stdout, "connect master ('%s:%s@%s:%d') fail, socket id is '%d'  <%s::%s , %d>\n", mycb_conf.userName,
-				mycb_conf.password,mycb_conf.host, mycb_conf.port, mycb_conf.sock, __FILE__, __func__, __LINE__);
+	if ((ret = mycb_connect()) != 0) {
+		fprintf(stdout, "[mysqlcb] connect master ('%s:%s@%s:%d') fail, socket id is '%d'  \n", mycb_conf.userName,
+				mycb_conf.password, mycb_conf.host, mycb_conf.port, mycb_conf.sock);
 		return -1;
 	}
 	if (mycb_conf.verbose > 0) {
-		fprintf(stdout, "connect master ('%s@%s:%d') , socket id is '%d'  <%s::%s , %d>\n", mycb_conf.userName,
-				mycb_conf.host, mycb_conf.port, mycb_conf.sock, __FILE__, __func__, __LINE__);
+		fprintf(stdout, "[mysqlcb] connect master ('%s@%s:%d') , socket id is '%d'  \n", mycb_conf.userName,
+				mycb_conf.host, mycb_conf.port, mycb_conf.sock);
 	}
 
 	//初始化ralaylog
 	if ((ret = mycb_init_ralay_log()) != 0) {
-		fprintf(stderr, "<ERROR>init ralay log fail <%s::%s , %d>>\n", __FILE__, __func__, __LINE__);
+		fprintf(stderr, "[mysqlcb] [error] init ralay log fail >\n");
 		return -1;
 	}
 	if (mycb_conf.verbose > 0) {
-		fprintf(stdout, "start file '%s', start pos '%d' <%s::%s , %d>\n", mycb_conf.ralayLogName,
-				mycb_conf.ralayLogPos, __FILE__, __func__, __LINE__);
+		fprintf(stdout, "[mysqlcb] [info] start file '%s', start pos '%d' \n", mycb_conf.ralayLogName, mycb_conf.ralayLogPos);
 	}
 
 	//发送dump命令
 	if ((ret = mycb_send_dump_cmd()) != 0) {
-		fprintf(stderr, "<ERROR>send dump command fail	<%s::%s , %d>\n", __FILE__, __func__, __LINE__);
+		fprintf(stderr, "[mysqlcb] [error] send dump command fail\n");
 		return -1;
 	}
 	if (mycb_conf.verbose > 0) {
-		fprintf(stderr, "send dump command	<%s::%s , %d>\n", __FILE__, __func__, __LINE__);
+		fprintf(stderr, "[mysqlcb] [info] send dump command\n");
 	}
 
 	//循环读取event
 	if (mycb_conf.verbose > 0) {
-		fprintf(stderr, "start loop event	<%s::%s , %d>\n", __FILE__, __func__, __LINE__);
+		fprintf(stderr, "[mysqlcb] [info] start loop event\n");
 	}
 	ret = mycb_loop_event();
 	if (mycb_conf.verbose > 0) {
-		fprintf(stderr, "end loop event	<%s::%s , %d>\n", __FILE__, __func__, __LINE__);
+		fprintf(stderr, "[mysqlcb] [info] end loop event\n");
 	}
 
 	return ret;
 }
 
-int my_cb_connect() {
-	mycb_conf.mysql = mysql_init(NULL);
+int mycb_connect() {
+	mycb_conf.mysql = mysql_init(NULL );
 	mycb_conf.mysql = mysql_real_connect(mycb_conf.mysql, mycb_conf.host, mycb_conf.userName, mycb_conf.password, "",
 			mycb_conf.port, NULL, 0);
-	if (mycb_conf.mysql == NULL) {
+	if (mycb_conf.mysql == NULL ) {
 		return -1;
 	}
 	mycb_conf.sock = mycb_conf.mysql->net.fd;
+
+	//set none block
+	int flag = fcntl(mycb_conf.sock, F_GETFL, 0);
+	if (fcntl(mycb_conf.sock, F_SETFL, flag | O_NONBLOCK) != 0) {
+		return -1;
+	}
 	return 0;
 }
 
@@ -93,8 +98,8 @@ int mycb_init_ralay_log() {
 	DIR * dp = NULL;
 	struct dirent *ent = NULL;
 
-	if ((dp = opendir(mycb_conf.ralayLogPath)) == NULL) {
-		fprintf(stderr, "<ERROR>open ralay log path '%s' fail\n", mycb_conf.ralayLogPath, __FILE__, __func__, __LINE__);
+	if ((dp = opendir(mycb_conf.ralayLogPath)) == NULL ) {
+		fprintf(stderr, "[mysqlcb] [error] open ralay log path '%s' fail\n", mycb_conf.ralayLogPath);
 		return -1;
 	}
 
@@ -103,10 +108,10 @@ int mycb_init_ralay_log() {
 	int maxNum = 0;
 	char suffix[256] = { '\0' };
 	char tmpLogName[256] = { '\0' };
-	while ((ent = readdir(dp)) != NULL) {
+	while ((ent = readdir(dp)) != NULL ) {
 		strncpy(tmpLogName, ent->d_name, sizeof(tmpLogName));
 		char * pos = rindex(tmpLogName, '.');
-		if (pos == NULL) {
+		if (pos == NULL ) {
 			continue;
 		}
 		pos++;
@@ -132,7 +137,7 @@ int mycb_init_ralay_log() {
 			mycb_conf.ralayLogName);
 
 	if ((ret = mycb_open_ralay_log()) != 0) {
-		fprintf(stderr, "<ERROR>open ralay log file fail '%s' fail\n", mycb_conf.ralayLogFullName, __FILE__, __func__,
+		fprintf(stderr, "[mysqlcb] [error] open ralay log file fail '%s' fail\n", mycb_conf.ralayLogFullName, __FILE__, __func__,
 				__LINE__);
 		return -1;
 	}
@@ -158,25 +163,25 @@ int mycb_load_max_ralay_from_db(char * maxFile, uint len) {
 
 	//因为是从起始处同步，为了避免文件过大，浪费同步时间，强制请求master产生新的binlog
 	if ((ret = mysql_query(mycb_conf.mysql, "flush logs")) != 0) {
-		fprintf(stderr, "flush logs fail:%s\n", mysql_error(mycb_conf.mysql));
+		fprintf(stderr, "[mysqlcb] [error] flush logs fail:%s\n", mysql_error(mycb_conf.mysql));
 		return -1;
 	}
 
 	if ((ret = mysql_query(mycb_conf.mysql, "show master logs")) != 0) {
-		fprintf(stderr, "show master logs fail:%s\n", mysql_error(mycb_conf.mysql));
+		fprintf(stderr, "[mysqlcb] [error] show master logs fail:%s\n", mysql_error(mycb_conf.mysql));
 		return -1;
 	}
 
-	if ((result = mysql_store_result(mycb_conf.mysql)) == NULL) {
-		fprintf(stderr, "show master logs fail:%s\n", mysql_error(mycb_conf.mysql));
+	if ((result = mysql_store_result(mycb_conf.mysql)) == NULL ) {
+		fprintf(stderr, "[mysqlcb] [error] show master logs fail:%s\n", mysql_error(mycb_conf.mysql));
 		return -1;
 	}
 	MYSQL_ROW row = NULL;
-	while ((row = mysql_fetch_row(result)) != NULL) {
+	while ((row = mysql_fetch_row(result)) != NULL ) {
 		strncpy(tmpLogName, row[0], sizeof(tmpLogName));
 
 		char * pos = rindex(tmpLogName, '.');
-		if (pos == NULL) {
+		if (pos == NULL ) {
 			continue;
 		}
 		pos++;
@@ -223,21 +228,29 @@ void mycb_print_error_packet() {
 
 	bzero(msg, sizeof(msg));
 	mycb_buf_read_fixed_string(&mycb_conf.readBuf, msg, remain);
-	fprintf(stderr, "error packet result '%s' <%s::%s , %d>\n", msg, __FILE__, __func__, __LINE__);
+	fprintf(stderr, "[mysqlcb] [error] error packet result '%s' \n", msg);
 }
 int mycb_loop_event() {
 	int ret;
-	while ((ret = mycb_read_packet()) == 0 && !daemon_quit) {
-		mycb_parse_event();
+	while (1) {
+		if (!mycb_conf.isRun) {
+			break;
+		}
+		if (!mycb_can_read()) {
+			continue;
+		}
+		if ((ret = mycb_read_packet()) == 0) {
+			mycb_parse_event();
+		}
 	}
 	return 0;
 }
 
 int mycb_open_ralay_log() {
-	if (mycb_conf.ralayLogFd != NULL) {
+	if (mycb_conf.ralayLogFd != NULL ) {
 		return 0;
 	}
-	if ((mycb_conf.ralayLogFd = fopen(mycb_conf.ralayLogFullName, "a+")) == NULL) {
+	if ((mycb_conf.ralayLogFd = fopen(mycb_conf.ralayLogFullName, "a+")) == NULL ) {
 		return -1;
 	}
 	uint ret;
@@ -247,7 +260,7 @@ int mycb_open_ralay_log() {
 	return 0;
 }
 int mycb_switch_ralay_log() {
-	if (mycb_conf.ralayLogFd != NULL) {
+	if (mycb_conf.ralayLogFd != NULL ) {
 		fclose(mycb_conf.ralayLogFd);
 	}
 	mycb_conf.ralayLogFd = NULL;
@@ -273,10 +286,10 @@ int mycb_write_packet(uint sid) {
 	tmp = (uchar) sid;
 	memcpy(ptr++, &tmp, 1);
 
-	if (mycb_my_write(header, sizeof(header)) != 0) {
+	if (mycb_write(header, sizeof(header)) != 0) {
 		return -1;
 	}
-	if (mycb_my_write(mycb_conf.writeBuf.start, bodyLen) != 0) {
+	if (mycb_write(mycb_conf.writeBuf.start, bodyLen) != 0) {
 		return -1;
 	}
 	mycb_buf_reset(&mycb_conf.writeBuf);
@@ -287,7 +300,7 @@ int mycb_read_packet() {
 	char header[4];
 
 	mycb_buf_reset(&mycb_conf.readBuf);
-	if (mycb_my_read((void *) header, 4) != 0) {
+	if (mycb_read((void *) header, 4) != 0) {
 		return -1;
 	}
 	mycb_buf_set_buf(&mycb_conf.readBuf, header, sizeof(header));
@@ -295,7 +308,7 @@ int mycb_read_packet() {
 	uint sid = mycb_buf_read_uint8(&mycb_conf.readBuf);
 
 	char body[bodyLen];
-	if (mycb_my_read((void *) body, bodyLen) != 0) {
+	if (mycb_read((void *) body, bodyLen) != 0) {
 		return -1;
 	}
 	mycb_buf_set_buf(&mycb_conf.readBuf, body, sizeof(body));
@@ -303,8 +316,7 @@ int mycb_read_packet() {
 }
 int mycb_write_to_ralay_file() {
 	if (mycb_conf.verbose > 0) {
-		fprintf(stdout, "write to file size:%ld	<%s::%s , %d>\n", mycb_conf.readBuf.limit - mycb_conf.readBuf.start - 1,
-				__FILE__, __func__, __LINE__);
+		fprintf(stdout, "[mysqlcb] [ralay] write to file size:%ld\n", mycb_conf.readBuf.limit - mycb_conf.readBuf.start - 1);
 	}
 	fwrite(&mycb_conf.readBuf.start + 1, mycb_conf.readBuf.limit - mycb_conf.readBuf.start - 1, 1,
 			mycb_conf.ralayLogFd);
@@ -328,8 +340,8 @@ int mycb_parse_event() {
 	mycb_conf.eventTime = time;
 
 	if (mycb_conf.verbose > 0) {
-		fprintf(stdout, "[time=%d,type=%d,serverId=%d,size=%d,pos=%d,flags=%d]	<%s::%s , %d>\n", time, type, serverId,
-				size, pos, flags, __FILE__, __func__, __LINE__);
+		fprintf(stdout, "[mysqlcb] [event] time=%d,type=%d,serverId=%d,size=%d,pos=%d,flags=%d\n", time, type, serverId,
+				size, pos, flags);
 	}
 	if (pos != 0) {
 		if (mycb_write_to_ralay_file() != 0) {
@@ -864,40 +876,109 @@ int mycb_write_file_head() {
 	return 0;
 }
 
-int mycb_my_read(void *buf, size_t size) {
+int mycb_can_read() {
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = 1000;
+
+	fd_set fset;
+	FD_ZERO(&fset);
+	FD_SET(mycb_conf.sock, &fset);
+	if (select(mycb_conf.sock + 1, &fset, NULL, NULL, &tv) == 0) {
+		return 0;
+	}
+	return 1;
+}
+int mycb_read(void *buf, size_t size) {
 	int ret;
 	size_t remain = size;
 
+	int timeout = 10000;		//超时时间10s
+	struct timeval curTv;
+	fd_set fset;
+	FD_ZERO(&fset);
+	FD_SET(mycb_conf.sock, &fset);
+
+	struct timeval maxTv;		//超时时刻
+	gettimeofday(&maxTv, NULL );
+	maxTv.tv_sec += timeout / 1000;
+	maxTv.tv_usec += timeout % 1000 * 1000;
+
 	while (remain > 0) {
-		ret = read(mycb_conf.sock, buf, remain);
-		if (ret == 0) {
+		struct timeval remainTv;
+		gettimeofday(&curTv, NULL );
+		if (curTv.tv_sec > maxTv.tv_sec || (curTv.tv_sec == maxTv.tv_sec && curTv.tv_usec > maxTv.tv_usec)) {
+			//超时
 			break;
 		}
-		if (ret == -1 && errno == EAGAIN) {
-			continue;
+
+		//新的超时时间
+		remainTv.tv_sec = maxTv.tv_sec - curTv.tv_sec;
+		remainTv.tv_usec = maxTv.tv_usec - curTv.tv_usec;
+
+		if (select(mycb_conf.sock + 1, &fset, NULL, NULL, &remainTv) == 0) {
+			break;
 		}
-		remain -= ret;
+		while (remain > 0) {
+			ret = read(mycb_conf.sock, buf, remain);
+			if (ret == 0) {
+				break;
+			}
+			if (ret == -1 && errno == EAGAIN) {
+				continue;
+			}
+			remain -= ret;
+		}
 	}
+
 	if (remain > 0) {
 		return -1;
 	}
 	return 0;
 }
 
-int mycb_my_write(const char * buf, size_t size) {
+int mycb_write(const char *buf, size_t size) {
 	int ret;
 	size_t remain = size;
 
+	int timeout = 10000;		//超时时间10s
+	struct timeval curTv;
+	fd_set fset;
+	FD_ZERO(&fset);
+	FD_SET(mycb_conf.sock, &fset);
+
+	struct timeval maxTv;		//超时时刻
+	gettimeofday(&maxTv, NULL );
+	maxTv.tv_sec += timeout / 1000;
+	maxTv.tv_usec += timeout % 1000 * 1000;
+
 	while (remain > 0) {
-		ret = write(mycb_conf.sock, buf, remain);
-		if (ret == 0) {
+		struct timeval remainTv;
+		gettimeofday(&curTv, NULL );
+		if (curTv.tv_sec > maxTv.tv_sec || (curTv.tv_sec == maxTv.tv_sec && curTv.tv_usec > maxTv.tv_usec)) {
+			//超时
 			break;
 		}
-		if (ret == -1 && errno == EAGAIN) {
-			continue;
+
+		//新的超时时间
+		remainTv.tv_sec = curTv.tv_sec - maxTv.tv_sec;
+		remainTv.tv_usec = curTv.tv_usec - maxTv.tv_usec;
+
+		if (select(mycb_conf.sock + 1, &fset, NULL, NULL, &remainTv) == 0) {
+			break;
 		}
-		remain -= ret;
+		while (remain > 0) {
+			ret = write(mycb_conf.sock, buf, remain);
+			if (ret == 0) {
+				break;
+			}
+			if (ret == -1 && errno == EAGAIN) {
+				continue;
+			}
+			remain -= ret;
+		}
 	}
+
 	if (remain > 0) {
 		return -1;
 	}

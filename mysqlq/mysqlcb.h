@@ -34,7 +34,7 @@
 #include <dirent.h>
 #include <assert.h>
 
-#include "mysql.h"
+#include "mysql/mysql.h"
 
 #include "mysqlcb_def.h"
 #include "mysqlcb_buffer.h"
@@ -83,8 +83,9 @@ typedef struct s_mycb_conf_t {
 	uint fieldLenMap[256];
 	char db[256];
 	char table[256];
-	uint eventTime;
+	uint eventTime;//事件产生的时间
 	uint verbose;
+	uint isRun;//
 } mycb_conf_t;
 
 extern mycb_conf_t mycb_conf;
@@ -96,9 +97,9 @@ extern mycb_conf_t mycb_conf;
  *      Author: quanwei
  */
 
-void my_cb_init();
-int my_cb_start();
-int my_cb_connect();
+void mycb_init();
+int mycb_start();
+int mycb_connect();
 int mycb_init_ralay_log();
 int mycb_load_max_ralay_from_db(char * maxFile, uint len);
 int mycb_send_dump_cmd();
@@ -129,8 +130,9 @@ int mycb_read_date_field(field_t * field);
 int mycb_read_timestamp_field(field_t * field);
 int mycb_parse_rotate_event();
 int mycb_write_file_head();
-int mycb_my_read(void *buf, size_t size);
-int mycb_my_write(const char * buf, size_t size);
+int mycb_can_read();
+int mycb_read(void *buf, size_t size);
+int mycb_write(const char * buf, size_t size);
 
 void startMysqlcb(const char *host, int port, const char *userName, const char * password, int serverId,
 		const char * ralayLogPath, void (*eventHandler)(event_t *));
