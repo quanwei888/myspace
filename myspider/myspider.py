@@ -1,39 +1,51 @@
 import scrapy
+import xmltodict
+import sys
+sys.path.append(sys.path[0])
 
+print sys.path
+from rule import Rule
+from parser import Parser
+from field import Field
 
 class MySpider(scrapy.Spider):
-    name = "test"
-    start_urls = ("https://www.baidu.com/s?wd=qq")
-    allowed_domains = ["baidu.com"]
+    name = "my"
+    start_urls = (
+        'https://www.sogou.com/web?query=qq',
+        )
     
     parser = None
     fields = None
-    name = None
     startUrls = None
     rules = None
-  
+ 
+    def __init__(self):
+        self.init()
+    
+    
+    def init(self):
+        self.initConf() 
    
     def parse(self,response):
         pass 
 
-    def start_requests(self):
-        return [make_requests_from_url("https://www.baidu.com/s?wd=qq")]
-'''
     
     def initConf(self):
-       content = open(file).read() 
-       conf = xmltodict.parse(content)
-       conf = conf['spider']
+        fileName = "./spider.xml"
+        content = open(fileName).read() 
+        conf = xmltodict.parse(content)
+        conf = conf['spider']
 
-       self.name = conf['name']
-       self.startUrls = conf['startUrls']
-       self.initRules(conf)
-       self.initParsers(conf)
+        print conf
+        self.name = conf['name']
+        self.startUrls = conf['startUrls']
+        self.initRules(conf)
+        self.initParsers(conf)
         
     
     def initRules(self,conf):
         rulesConf = conf['rules']
-        for ruleConf in rules:
+        for ruleConf in rulesConf:
             rule = Rule(ruleConf['fromUrlPattern'],ruleConf['toUrlPattern'])
             self.rules.append(rule)
     
@@ -57,4 +69,3 @@ class MySpider(scrapy.Spider):
         
     def getParserByUrl(self,url):
         pass
-    '''
