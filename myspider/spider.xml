@@ -1,0 +1,35 @@
+<spider>
+    <name>demo</name>
+        
+    <startUrls>
+        <url>http://www.baidu.com</url>
+    </startUrls>
+
+    <rules>
+        <rule fromUrlPattern="" toUrlPattern="" />      
+    </rules>
+
+    <parsers>
+        <parser>
+            <urlPattern>xxx</urlPattern>
+            <fields>
+                <field name="title" type="text" xpath="" cssPath=""/>
+                <field name="title" type="html" xpath="" cssPath=""/>
+                <field name="title" type="list" xpath="" cssPath=""/>
+                <field name="title" type="comp" xpath="" cssPath=""/>
+                    <fields>
+                        <field name="title" type="text" xpath="" cssPath=""/>
+                        <field name="title" type="text" xpath="" cssPath=""/>
+                    </fields>        
+                </field>
+                <field name="title" type="compList" xpath="" cssPath=""/>
+                    <fields>
+                        <field name="title" type="text" xpath="" cssPath=""/>
+                        <field name="title" type="text" xpath="" cssPath=""/>
+                    </fields>        
+                </field>
+            </fields>
+        </parser>
+    </parsers>
+
+</spider>
