@@ -46,7 +46,7 @@ class MySpider(scrapy.Spider):
     rules = None
  
     def __init__(self):
-        confPath = os.path.dirname(__file__) + "/conf.json"
+        confPath = os.path.dirname(__file__) + "/conf/baike.conf"
         confMgr = ConfMgr(confPath)
         self.rules = confMgr.getRules()
         self.parsers = confMgr.getParsers()

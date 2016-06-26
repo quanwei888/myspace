@@ -10,28 +10,35 @@
 	        	 "fromUrl":"http://club\\.xywy\\.com/keshi/1\\.html",
 	        	 "toUrl":"http://club\\.xywy\\.com/keshi/\\d+-\\d+-\\d+/\\d+\\.html",
 	        	 "extractor":"default"
+	         },
+	         {
+	        	 "fromUrl":"http://club\\.xywy\\.com/keshi/\\d+-\\d+-\\d+/\\d+\\.html",
+	        	 "toUrl":"http://club.xywy.com/question/\\d+/\\d+.htm",
+	        	 "extractor":"default"
 	         }
 	    ],
 	"parsers":
 		[
 		 	{
-		 		"name":"question",
+		 		"name":"SimpleQuestion",
 		 		"url":"http://club\\.xywy\\.com/keshi/\\d+-\\d+-\\d+/\\d+\\.html",
 		 		"xpath":"//div[@class='club_dic']",
 		 		"fields":
 		 			[
 		 			 	{"name":"department","type":"text","xpath":"./h4/var/a"},
 		 			 	{"name":"title","type":"text","xpath":"./h4/em/a"},
-		 			 	{"name":"content","type":"text","xpath":"./div"},
-		 			 	{
-		 			 		"name":"q","type":"struct","xpath":".",
-		 			 		"fields":
-			 			 		[
-			 			 		 	{"name":"department","type":"text","xpath":"./h4/var/a"},
-			 			 		 	{"name":"title","type":"text","xpath":"./h4/em/a"},
-			 			 		 	{"name":"content","type":"text","xpath":"./div"}
-			 			 		]
-		 			 	}
+		 			 	{"name":"content","type":"text","xpath":"./div"}
+		 			]
+		 	},
+		 	{
+		 		"name":"UserAnswer",
+		 		"url":"http://club.xywy.com/question/\\d+/\\d+.htm",
+		 		"xpath":"//div[@class='ml30 mr30 pt10']",
+		 		"fields":
+		 			[
+		 			 	{"name":"user","type":"text","xpath":"//span[@class='fl']"},
+		 			 	{"name":"pubDate","type":"text","xpath":"//span[@class='col99 fr']"},
+		 			 	{"name":"answer","type":"text","xpath":"//div[@class='f14 btn-a lh180']"}
 		 			]
 		 	}
 		]

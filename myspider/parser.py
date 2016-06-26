@@ -10,7 +10,7 @@ class Parser:
     def __init__(self,conf): 
         self.name = conf['name']
         self.url = conf['url']
-        self.xpath = conf['xpath']
+        self.xpath = conf.get('xpath','')
         self.fields = []         
         for fieldConf in conf['fields']:
             field = Helper.createField(fieldConf['type'],fieldConf)

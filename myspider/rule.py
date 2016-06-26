@@ -11,16 +11,11 @@ class Rule:
         self.toUrl = conf['toUrl']
         self.extractor = Helper.createExtractor(conf['extractor']) 
     
-    def parse(self,response):
-        '''
-        if not Helper.canMatch(self.fromUrl,response.request.url):
-            return []        
-        '''
-        
+    def parse(self,response):        
         urls= []
         for url in self.extractor.parse(response):
             if Helper.canMatch(self.toUrl,url):
                 urls.append(url)
-                break
+                #break
         
         return urls
