@@ -1,11 +1,11 @@
-
+from field import Field
 class ListField(Field):
 
     def parse(self,obj):
-        if xpath != "":
-            nodes = obj.xpath(xpath)
-        else if cssPath != "":
-            nodes = obj.css(xpath)
+        if self.xpath != "":
+            nodes = obj.xpath(self.xpath)
+        elif self.cssPath != "":
+            nodes = obj.css(self.cssPath)
         else:
             return None
 

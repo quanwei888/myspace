@@ -1,71 +1,80 @@
-import scrapy
-import xmltodict
 import sys
-sys.path.append(sys.path[0])
+import json
+import os
+import sys
+sys.path.append(os.path.dirname(__file__))
 
-print sys.path
+import scrapy
+from scrapy.http import Request
+import xmltodict
+
 from rule import Rule
-from parser import Parser
-from field import Field
+from parser import Parser 
+from helper import Helper
 
-class MySpider(scrapy.Spider):
-    name = "my"
-    start_urls = (
-        'https://www.sogou.com/web?query=qq',
-        )
+
+class ConfMgr:
+    conf = None
+    def __init__(self,confPath):
+        content = open(confPath).read()
+        self.conf = json.loads(content)
     
-    parser = None
-    fields = None
-    startUrls = None
+    def getName(self):
+        return conf['name']
+    
+    def getStartUrls(self):
+        startUrls = self.conf['startUrls']
+        return startUrls
+    
+    def getRules(self):
+        rulesConf = self.conf['rules']
+        rules = []
+        for ruleConf in rulesConf:
+            rules.append(Rule(ruleConf))
+        return rules
+
+    def getParsers(self):
+        parsersConf = self.conf['parsers']
+        parsers = []
+        for parserConf in parsersConf:
+            parsers.append(Parser(parserConf))
+        return parsers
+             
+class MySpider(scrapy.Spider):
+    name = "my"        
+    parsers = None
     rules = None
  
     def __init__(self):
-        self.init()
+        confPath = os.path.dirname(__file__) + "/conf.json"
+        confMgr = ConfMgr(confPath)
+        self.rules = confMgr.getRules()
+        self.parsers = confMgr.getParsers()
+        self.start_urls = confMgr.getStartUrls()
     
+    def createRequet(self,url):
+        return Request(url,headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.1'})
     
-    def init(self):
-        self.initConf() 
-   
-    def parse(self,response):
-        pass 
-
-    
-    def initConf(self):
-        fileName = "./spider.xml"
-        content = open(fileName).read() 
-        conf = xmltodict.parse(content)
-        conf = conf['spider']
-
-        print conf
-        self.name = conf['name']
-        self.startUrls = conf['startUrls']
-        self.initRules(conf)
-        self.initParsers(conf)
+    def start_requests(self):
+        for url  in self.start_urls:
+            yield self.createRequet(url)
         
-    
-    def initRules(self,conf):
-        rulesConf = conf['rules']
-        for ruleConf in rulesConf:
-            rule = Rule(ruleConf['fromUrlPattern'],ruleConf['toUrlPattern'])
-            self.rules.append(rule)
-    
-    def initParsers(self,conf):
-        parsersConf = conf['parsers']
-        for parserConf in parsersConf:
-            parser = Parser(parserConf['urlPattern'])
-            fields = []
-            for fieldConf in parserConf['fields']:
-                field = Field(fieldConf['name'],fieldConf['type'],
-                    fieldConf['xpath'],fieldConf['cssPath'])
-                fields.append(field)
-            parser.setFields(fields)
-            self.parsers.append(parser)
-
     def parse(self,response):
         url = response.request.url
-
-        parser = self.getParserByUrl(url)
-        data = parser
         
-    def getParserByUrl(self,url):
-        pass
+        #parse
+        parsers = Helper.getParsersByUrl(self.parsers, url)
+        for parser in parsers:
+            items = parser.parse(response)
+            for item in items:
+                yield item
+            
+        #extract link
+        rules = Helper.getRulesByUrl(self.rules, url)
+        for rule in rules:
+            urls = rule.parse(response)
+            for url in urls:
+                yield self.createRequet(url)
+        
+ 
+      
