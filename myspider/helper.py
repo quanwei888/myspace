@@ -1,6 +1,8 @@
 
 import importlib
 import re
+from __builtin__ import False
+from scrapy import log
 
 class Helper:
     @staticmethod
@@ -23,7 +25,14 @@ class Helper:
     
     @staticmethod
     def canMatch(pattern,text):
-        return re.match(pattern,text) != None
+        result = re.match(pattern,text)
+        if result == None:
+            return False
+        
+        if result.start() != 0 or result.end() != len(text):
+            return False
+        
+        return True
 
     @staticmethod
     def createExtractor(name):
