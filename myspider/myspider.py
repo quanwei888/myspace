@@ -28,6 +28,12 @@ class ConfMgr:
     
     def getRules(self):
         rulesConf = self.conf['rules']
+        urls = self.conf['urls']
+        
+        for ruleConf in rulesConf:
+            ruleConf['from'] = urls[ruleConf['from']]
+            ruleConf['to'] = urls[ruleConf['to']]
+        
         rules = []
         for ruleConf in rulesConf:
             rules.append(Rule(ruleConf))
@@ -35,6 +41,11 @@ class ConfMgr:
 
     def getParsers(self):
         parsersConf = self.conf['parsers']
+        urls = self.conf['urls']
+        
+        for parserConf in parsersConf:
+            parserConf['url'] = urls[parserConf['url']]
+            
         parsers = []
         for parserConf in parsersConf:
             parsers.append(Parser(parserConf))
@@ -46,7 +57,11 @@ class MySpider(scrapy.Spider):
     rules = None
  
     def __init__(self):
+<<<<<<< HEAD
         confPath = os.path.dirname(__file__) + "/conf/conf.json"
+=======
+        confPath = os.path.dirname(__file__) + "/conf/lianjia.conf"
+>>>>>>> 7f20ca093a6bc19e172102172b30b8840c4b0d0b
         confMgr = ConfMgr(confPath)
         self.rules = confMgr.getRules()
         self.parsers = confMgr.getParsers()

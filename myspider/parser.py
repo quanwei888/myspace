@@ -26,8 +26,8 @@ class Parser:
         if self.xpath != "":
             nodes = response.xpath(self.xpath)
             
-        for node in nodes:            
-            item = {'__NAME':self.name}
+        for node in nodes:         
+            item = {'__NAME':self.name,'__URL':response.url}
             for field in self.fields:
                 item[field.name] = field.parse(node)
             results.append(item)

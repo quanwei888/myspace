@@ -1,12 +1,12 @@
 
-from scrapy.utils.response import get_base_url
-from scrapy.utils.url import urljoin_rfc
+from scrapy import log
 
 class DefaultExtractor:    
-    def parse(self,response):
-        urls = []        
-        nodes = response.xpath("//a/@href").extract()
-        baseUrl = get_base_url(response)
+    def parse(self,nodes):
+        urls = []
+        
         for node in nodes:
-            urls.append(urljoin_rfc(baseUrl, node))
+            urlNodes = node.xpath(".//a/@href").extract()
+            for url in urlNodes:
+                urls.append(url)
         return urls
