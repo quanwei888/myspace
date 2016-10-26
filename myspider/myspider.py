@@ -57,11 +57,7 @@ class MySpider(scrapy.Spider):
     rules = None
  
     def __init__(self):
-<<<<<<< HEAD
-        confPath = os.path.dirname(__file__) + "/conf/conf.json"
-=======
         confPath = os.path.dirname(__file__) + "/conf/lianjia.conf"
->>>>>>> 7f20ca093a6bc19e172102172b30b8840c4b0d0b
         confMgr = ConfMgr(confPath)
         self.rules = confMgr.getRules()
         self.parsers = confMgr.getParsers()
