@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
+import os
+import glob
 from torch.utils.data import Dataset, DataLoader
 
 class SimLSTMModel(nn.Module):
@@ -126,9 +128,9 @@ def train(model,trainLoader,criterion, optimizer,evalData = None,
             else:
                 evalX = evalX.cuda()
 
+    batchLen = len(trainLoader)
     for epochIdx in xrange(epoch):
-        batchLen = len(trainLoader)
-        for i,batch in enumerate(trainLoader,1):
+        for i,batch in enumerate(trainLoader,batchLen * epochIdx + 1):
             x, y = batch            
             if torch.cuda.is_available():
                 y = y.cuda()
@@ -147,7 +149,7 @@ def train(model,trainLoader,criterion, optimizer,evalData = None,
             
             #print loss
             if i % echoStep == 0:
-                print "Step %d/%d/%d : Loss %.4f , Acc %.4f " %(i,batchLen,epochIdx+1,float(loss),acc)
+                print "Step %d/%d/%d : Loss %.4f , Acc %.4f " %(i,batchLen*epoch,epochIdx+1,float(loss),acc)
             #evaluate
             if i % evalStep == 0 and evalData != None:
                 evalOut = model(evalX)
@@ -172,6 +174,19 @@ def train(model,trainLoader,criterion, optimizer,evalData = None,
     torch.save(model.state_dict(),outFile)
     print "Save model : %s" %(outFile)
 
+def SimLSTMPrj(vocLen,embDim,encDim,savePath):
+    model = SimLSTMModel(vocLen, embDim, encDim)
+    fs = glob.glob(savePath+"/*.pt")
+    if fs:
+        saveFile = max(fs, key=os.path.getctime)
+        print "Loading Model '%s'" %saveFile
+        model.load_state_dict(torch.load(saveFile))
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
+    if torch.cuda.is_available():
+        model = model.cuda()
+    return model,criterion,optimizer
+
 def main():
     torch.manual_seed(1234)
     np.random.seed(1234)
@@ -179,31 +194,26 @@ def main():
     docLen = 12
     embDim = 128
     encDim = 256
+
     print "Load Train Data"
+    savePath="./model_lstm"
     trainFile = "./data/min_word/train"
     devFile = "./data/min_word/dev"
     vocFile = "./data/min_word/vocab"
-    trainData = SimDataset(trainFile,vocFile,queryLen,docLen,2,100000)
-    print "Load Dev Data"
-    devData = SimDataset(devFile,vocFile,queryLen,docLen,5,10000)
-
-    print "Load Model"
-    model = SimLSTMModel(trainData.getVocLen(), embDim, encDim)
-    model.load_state_dict(torch.load("./m_5000_10.pt"))
-    if torch.cuda.is_available():
-        model = model.cuda()
-    
-    print "Train ... "
+    trainData = SimDataset(trainFile,vocFile,queryLen,docLen,2,10000)
     trainLoader = DataLoader(trainData, 100)
+    
+    print "Load Dev Data"
+    devData = SimDataset(devFile,vocFile,queryLen,docLen,2)
     devLoader = DataLoader(devData, 10000)
     devData = None
     for batch in devLoader:
         devData = batch
         break
-    #print devData
-     
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
-    train(model,trainLoader,criterion,optimizer,evalData=devData,epoch=50)
+
+    print "Creaet Model"
+    model,criterion,optimizer = SimLSTMPrj(trainData.getVocLen(),embDim,encDim,savePath)
+    print "Train ... "
+    train(model,trainLoader,criterion,optimizer,evalData=devData,epoch=50,savePath=savePath)
 
 main()
