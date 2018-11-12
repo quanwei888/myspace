@@ -1,0 +1,82 @@
+#设置目录结构
+ROOT=/home/qw/mysql
+MASTER=$ROOT/master
+SLAVE=$ROOT/slave
+
+#主库
+mkdir $MASTER
+mkdir $MASTER/data
+touch $MASTER/my.cnf
+
+cat > $MASTER/my.cnf <<EOF
+[mysqld]
+user=root
+port=3306
+log-bin=binlog
+expire-logs-days=14
+max-binlog-size=500M
+server-id=1
+EOF
+
+#从库
+mkdir $SLAVE
+mkdir $SLAVE/data
+touch $SLAVE/my.cnf
+
+cat > $SLAVE/my.cnf <<EOF
+[mysqld]
+user=root
+port=3306
+log-bin=binlog
+expire-logs-days=14
+max-binlog-size=500M
+server-id=101
+EOF
+
+#下载镜像
+#sudo docker pull mysql/mysql-server:5.7
+
+#启动主库
+sudo docker run --name=master \
+-v $MASTER/my.cnf:/etc/my.cnf  -v $MASTER/data:/var/lib/mysql \
+-e MYSQL_ROOT_PASSWORD=111111 \
+-d mysql/mysql-server:5.7
+for i in {1..10} 
+do
+  sudo docker exec -it master mysql -uroot  -p111111 -e'use mysql' || sleep 2
+  echo "reconnect to  master..."
+done
+
+#设置slave帐号
+sudo docker exec -it master mysql -uroot  -p111111 -e "grant replication slave on *.* to 'slave'@'%' identified by '111111';flush privileges;"
+sudo docker exec -it master mysql -uroot  -p111111 -e "show master status"
+
+#启动从库
+sudo docker run --name=slave \
+-v $SLAVE/my.cnf:/etc/my.cnf  -v $SLAVE/data:/var/lib/mysql \
+-e MYSQL_ROOT_PASSWORD=111111 \
+-d mysql/mysql-server:5.7
+for i in {1..10} 
+do
+  sudo docker exec -it slave mysql -uroot  -p111111 -e'use mysql' || sleep 2
+  echo "reconnect to slave..."
+done
+
+#获取主从库IP
+masterIP=`sudo docker inspect  --format '{{ .NetworkSettings.IPAddress }}' master`
+slaveIP=`sudo docker inspect  --format '{{ .NetworkSettings.IPAddress }}' slave`
+
+#设置主从模式
+sudo docker exec -it slave mysql -uroot  -p111111 -e "SHOW SLAVE STATUS\G"
+sudo docker exec -it slave mysql -uroot  -p111111 -e "STOP SLAVE"
+sudo docker exec -it slave mysql -uroot  -p111111 -e "CHANGE MASTER TO MASTER_HOST='$masterIP' , MASTER_PORT = 3306, MASTER_USER='slave', MASTER_PASSWORD='111111'"
+sudo docker exec -it slave mysql -uroot  -p111111 -e "START SLAVE"
+sudo docker exec -it slave mysql -uroot  -p111111 -e "SHOW SLAVE STATUS\G"
+
+#测试
+sudo docker exec -it master mysql -uroot  -p111111 -e "create database test"
+sudo docker exec -it master mysql -uroot  -p111111 -e "create table test.product(id int,name char(100))"
+sudo docker exec -it master mysql -uroot  -p111111 -e "insert into test.product select 1,'aaa'"
+sudo docker exec -it master mysql -uroot  -p111111 -e "insert into test.product select 1,'bbb'"
+sleep 2
+sudo docker exec -it slave mysql -uroot  -p111111 -e "select * from test.product"
